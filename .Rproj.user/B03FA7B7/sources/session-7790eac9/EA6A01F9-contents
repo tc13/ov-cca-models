@@ -42,8 +42,8 @@ round2 = function(x, n=0) {
 }
 
 #Read in synthetic worm burden data for model
-worm_data <- read.csv("ov-data/worms-age-data.csv", header=T)
-eggs_data <- read.csv("ov-data/eggs-age-data.csv", header=T)
+worm_data <- read.csv("data/ov/worms-age-data.csv", header=T)
+eggs_data <- read.csv("data/ov/eggs-age-data.csv", header=T)
 
 #These data frame contain studies S1-S5 as shown in Table 1 of manuscript
 #Get indices for studies
@@ -202,7 +202,7 @@ d_1 <- list(
 ## First model - single age-variable FOI across four studies from the 1980s
 ## Curve fitted to mean worm burden by age categories
 ## Worm aggregation (k) estimated independently for each age category (with hierarchical prior)
-stan_file_1 <- file.path("dynamic-worm-mod.stan")
+stan_file_1 <- file.path("stan/dynamic-worm-mod.stan")
 mod1 <- cmdstan_model(stan_file_1, compile = FALSE)
 mod1$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 
@@ -353,14 +353,14 @@ legend(title="Study type", legend = c("Autopsy", "Worm expulsion", "Faecal egg d
 ## Second model with later surveys
 ######################################
 
-stan_file_2 <- file.path("dynamic-worm-age-binomial.stan")
+stan_file_2 <- file.path("stan/dynamic-worm-age-binomial.stan")
 mod2 <- cmdstan_model(stan_file_2, compile = FALSE)
 mod2$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 
 ## Prev age classes
 prev_mid_age <- c(5, 15, 25, 35, 45, 55, 65)
 
-jong_data <- read.csv("ov-data/jong-eggs-age-data.csv", header=T)
+jong_data <- read.csv("data/ov/jong-eggs-age-data.csv", header=T)
 
 # Jongsuksuntigul & Imsomboon 1997 - study conducted 1994
 #Egg count data also available
