@@ -84,12 +84,12 @@ foreach::getDoParRegistered()
 foreach::getDoParWorkers()
 
 #Meta data file with cellularity
-meta <- read.delim("Desktop/MutationTimeR/master.dpclust.txt")
-supp <- read.delim("Desktop/MutationTimeR/jusakul-TH.txt", sep="\t")
+meta <- read.delim("MutationTimeR/master.dpclust.txt")
+supp <- read.delim("MutationTimeR/jusakul-TH.txt", sep="\t")
 
 #Driver mutations
-drivers.all <- read.delim("Desktop/MutationTimeR/drivers/TableS3_panorama_driver_mutations_ICGC_samples.public.tsv")
-load("Desktop/MutationTimeR/drivers/TableS2_driver_point_mutations_annotation.RData")
+drivers.all <- read.delim("MutationTimeR/drivers/TableS3_panorama_driver_mutations_ICGC_samples.public.tsv")
+load("MutationTimeR/drivers/TableS2_driver_point_mutations_annotation.RData")
 
 #Lists
 bb <- muts <- mult <- cl.list <- clusters <- vcfs <- subclones <- list()
@@ -107,12 +107,12 @@ for(i in 1:length(chrs.name)){
 
 #Read in files
 for(i in 1:nrow(meta)){
-  cl.list[[i]] <- read.delim(paste0("Desktop/MutationTimeR/clusters/TH_",i,"_2000iters_1000burnin_bestClusterInfo.txt"))
-  vcfs[[i]] <- readVcf(paste0("Desktop/MutationTimeR/vcf/TH_",i,".somatic.pass.vcf.gz"))
-  subclones[[i]] <- read.delim(paste0("Desktop/MutationTimeR/subclones/T_CCA_TH_",i,"_subclones.txt"))
-  muts[[i]] <- read.table(paste0("Desktop/MutationTimeR/muts/TH_",i,".muts.txt"))
+  cl.list[[i]] <- read.delim(paste0("MutationTimeR/clusters/TH_",i,"_2000iters_1000burnin_bestClusterInfo.txt"))
+  vcfs[[i]] <- readVcf(paste0("MutationTimeR/vcf/TH_",i,".somatic.pass.vcf.gz"))
+  subclones[[i]] <- read.delim(paste0("MutationTimeR/subclones/T_CCA_TH_",i,"_subclones.txt"))
+  muts[[i]] <- read.table(paste0("MutationTimeR/muts/TH_",i,".muts.txt"))
   colnames(muts[[i]]) <- c("chr", "start", "end","ref", "alt")
-  mult[[i]] <- read.delim(paste0("Desktop/MutationTimeR/dpclust3p/T_CCA_TH_",i,".dpclust3p.txt"))
+  mult[[i]] <- read.delim(paste0("MutationTimeR/dpclust3p/T_CCA_TH_",i,".dpclust3p.txt"))
 }
 
 #Update cluster df to get cellular fraction
@@ -355,7 +355,7 @@ for(i in 1:22){
 tumours <- list()
 tumour_depth <- c()
 for(i in 1:22){
-  t.path <- paste("Google Drive/My Drive/Opisthorchis/CCA-evolution/CCA_TH_depth/single_sample/T_CCA_TH_", i, ".bin.1Mb", sep="")
+  t.path <- paste("CCA_TH_depth/single_sample/T_CCA_TH_", i, ".bin.1Mb", sep="")
   tumours[[i]] <- read.table(t.path, header=T)
   tumour_depth[i] <- round(median(tumours[[i]]$mean))
 }
@@ -371,14 +371,3 @@ for(i in 1:22){
   power.tumour[i] <- power(tumour_depth[i], purity=bb[[i]]$clonal_frequency[1], ploidy=finalPloidy[i])
 }
 
-#Attempt to merge vcf TH9 with annotated drivers
-# Get timings from amplificationTimer
-findOverlaps(vcfs[[1]], finalDrivers)
-finalDrivers[c(2106, 2132, 2146, 684)]
-cn.idx <- which(!is.na(mt[[1]]$T$time))
-bb[[1]][cn.idx]
-findOverlaps(bb[[1]], finalDrivers[c(2106,684)])
-bb[[1]][c(18,83)]
-mt[[1]]$V[c(1427, 5521),]
-info(vcfs[[1]])[c(1427, 5521),]
-summary.factor(mt[[1]]$T$time)

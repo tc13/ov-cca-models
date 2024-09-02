@@ -7,8 +7,8 @@ library(scales)
 library(cmdstanr)
 
 #Meta data file with cellularity
-meta <- read.delim("Desktop/MutationTimeR/master.dpclust.txt")
-supp <- read.delim("Desktop/MutationTimeR/jusakul-TH.txt", sep="\t")
+meta <- read.delim("MutationTimeR/master.dpclust.txt")
+supp <- read.delim("MutationTimeR/jusakul-TH.txt", sep="\t")
 
 #Size of chromosomes
 chrs.name <- c((1:22), "X")
@@ -18,10 +18,10 @@ chrs.length <- seqlengths(BSgenome.Hsapiens.UCSC.hg19)[1:23]
 muts <- cn <- mult <- list()
 
 for(i in 1:22){
-muts[[i]] <- read.table(paste0("Desktop/MutationTimeR/muts/TH_",i,".muts.txt"), sep="\t")
+muts[[i]] <- read.table(paste0("MutationTimeR/muts/TH_",i,".muts.txt"), sep="\t")
 colnames(muts[[i]]) <- c("chr", "start", "end","ref", "alt")
-cn[[i]] <- read.table(paste0("Desktop/MutationTimeR/subclones/T_CCA_TH_",i,"_subclones.txt"), header=T)
-mult[[i]] <- read.table(paste0("Desktop/MutationTimeR/dpclust3p/T_CCA_TH_",i,".dpclust3p.txt"), header=T)
+cn[[i]] <- read.table(paste0("MutationTimeR/subclones/T_CCA_TH_",i,"_subclones.txt"), header=T)
+mult[[i]] <- read.table(paste0("MutationTimeR/dpclust3p/T_CCA_TH_",i,".dpclust3p.txt"), header=T)
 }
 
 #Gene chromosomes coordinates 
@@ -209,7 +209,7 @@ drivers.qc$end <- as.numeric(sapply(drivers.qc$region, function(x) strsplit(strs
 ## Beta regression for drivers ##
 #################################
 ## load stan file
-beta_reg <- file.path("Google Drive/My Drive/Opisthorchis/CCA-evolution", "beta-regression.stan")
+beta_reg <- file.path("stan", "beta-regression.stan")
 bmod <- cmdstan_model(beta_reg, compile = FALSE)
 bmod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 
@@ -261,8 +261,7 @@ alpha_sort <- alpha_CI[order(alpha_CI$`50%`),]
 alpha_x <- 1:nrow(alpha_sort)
 
 #Plot coefficients by gene
-#pdf("Google Drive/My Drive/Opisthorchis/CCA-evolution/gene-beta-coefficient.pdf",
-#    height=7, width=9)
+#pdf("gene-beta-coefficient.pdf",   height=7, width=9)
 par(mar=c(6,5,1,0), xpd=F)
 plot(alpha_sort$`50%`~alpha_x, pch=16, cex=1.6, axes=F, 
      ylab="Chronological time", xlab="", cex.lab=1.4,
@@ -325,8 +324,7 @@ clonal.indx <- which(drivers.qc$clonality_status=="clonal")
 subclonal.indx <- which(drivers.qc$clonality_status=="subclonal")
 sort(summary.factor(drivers.qc$chr))
 
-#pdf("Google Drive/My Drive/Opisthorchis/CCA-evolution/chr-copy-num-gains-age.pdf",
-#        height=6.2, width=7.8)
+#pdf("chr-copy-num-gains-age.pdf", height=6.2, width=7.8)
 par(mar=c(5,5,2,3))
 plot(1, type="n", ylim=c(0,1), axes=F, ylab="", xlab="", xlim=c(1,22))
 abline(v=12, lty=3, lwd=1.2)
@@ -349,8 +347,7 @@ legend("bottomleft", legend=c("Clonal", "Subclonal"),
 #dev.off()
 
 #Amplification of driver genes by fraction of lifetime
-pdf("Google Drive/My Drive/Opisthorchis/CCA-evolution/copy-num-gains-age.pdf",
-    height=6, width=7)
+#pdf("copy-num-gains-age.pdf",  height=6, width=7)
 par(mar=c(5,6,1,1))
 hist(drivers.qc$timing, col=alpha("#E41A1C", alpha=0.75), 
      ylim=c(0,45), xlim=c(0,1), axes=F, xaxs="i", yaxs="i",
@@ -370,7 +367,7 @@ title(xlab="Chronological time", cex.lab=1.4)
 legend(x=c(0.05,0.2), y=c(40,45), legend=c("Clonal", "Subclonal"), 
        col=c(alpha("#4DAF4A",0.8), alpha("#E41A1C", alpha=0.8)), 
        bty="n", cex=1.4, lwd=7)
-dev.off()
+#dev.off()
 
 #Summary of induction period
 summary(clon_df$age_mut-2.2)
@@ -392,9 +389,7 @@ clonal_peri_idx <- which(clon_df$CCA=="Perihilar")
 sub_ihep_idx <- which(sub_df$CCA=="Intrahepatic") 
 sub_peri_idx <- which(sub_df$CCA=="Perihilar") 
 
-#Make pdf
-pdf("Google Drive/My Drive/Opisthorchis/CCA-evolution/clonal-sub-mutation-age-boxplot.pdf",
-   height=7, width=9)
+#pdf("clonal-sub-mutation-age-boxplot.pdf", height=7, width=9)
 
 #x jitter values
 set.seed(1996)
@@ -477,7 +472,7 @@ subclonal_text_y <- sub_df$age_mut + subclonal_offset
 subclonal_text_x <- x_subclonal + sub_x_offset
 text(sub_df$gene, x=subclonal_text_x, y=subclonal_text_y, cex=0.95)
 
-dev.off()
+#dev.off()
 
 driver_chr17 <- drivers.qc[drivers.qc$chr==17,]
 y_row <- 1:nrow(driver_chr17)
@@ -488,6 +483,6 @@ plot(NULL, ylim=c(1,nrow(driver_chr17)+1),
 for(i in 1:nrow(driver_chr17))
   polygon(x=c(driver_chr17$start[i], driver_chr17$end[i]), y=c(y_row[i], y_row[i]+0.5))
 
-#birth age (guess)
+#birth age
 summary(2016 - supp$Age.at.surgery) #all born before 1980
 

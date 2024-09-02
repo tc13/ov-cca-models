@@ -5,6 +5,7 @@ library(cmdstanr)
 library(posterior)
 library(scales)
 library(Hmisc)
+library(rethinking)
 
 #Round function
 round2 = function(x, n=0) {
@@ -33,7 +34,7 @@ pop_2000 <- 1733434
 pop_1991 <- 1656971
 
 #Age distribution, UN data from Thai census http://data.un.org/
-aged <- read.csv("Google Drive/My Drive/Opisthorchis/Data/Thai_demographics_UN.csv", header=T)
+aged <- read.csv("data/who/Thai_demographics_UN.csv", header=T)
 aged$Age <- as.character(aged$Age)
 
 #Thai population by age group 1990
@@ -71,17 +72,17 @@ kk_case_vec <- as.vector(t(kk_case_mat))
 #Baseline data from Malaysia (code=3236) - WHO mortality data 
 #https://www.who.int/data/data-collection-tools/who-mortality-database
 
-ccs <- read.csv("Desktop/country_codes", header=T)
-pop <- read.csv("Desktop/pop")
+ccs <- read.csv("data/who/country_codes", header=T)
+pop <- read.csv("data/who/pop")
 
 # ICD code (V10) 
 # C22 = Malignant neoplasm of liver and intrahepatic bile ducts
 # C24 = Malignant neoplasm of other and unspecified parts of biliary tract
 # https://icd.who.int/browse10/2019/en#C22.1
 
-mort1 <- read.csv("Desktop/Morticd10_part1", header=T) #up to 2002
-mort2 <- read.csv("Desktop/Morticd10_part2", header=T) #2003-2007
-mort3 <- read.csv("Desktop/Morticd10_part3", header=T) #2008-2012
+mort1 <- read.csv("data/who/Morticd10_part1", header=T) #up to 2002
+mort2 <- read.csv("data/who/Morticd10_part2", header=T) #2003-2007
+mort3 <- read.csv("data/who/Morticd10_part3", header=T) #2008-2012
 
 #2007
 m_07_ICD <- mort2[(mort2$Cause %in% c("C22", "C24") & mort2$Year==2007 & mort2$Country==3236),]
@@ -148,12 +149,12 @@ malaysia09 <- data.frame(
 ###############################
 ## Prevalence of liver fluke ##
 ###############################
-#Load in R data from model runs
-load("~/Library/CloudStorage/GoogleDrive-tomcrellen@gmail.com/My Drive/Opisthorchis/CCA-evolution/worm-mod-out.RData")
+#Load in R data from model posteriors
+load("worm-mod-out.RData")
 age <- c(1:85)
+
 M_pre_mat <- matrix(data=0, ncol=length(post$alpha), nrow=length(age))
 M_post_mat <- matrix(data=0, ncol=length(post2$alpha), nrow=length(age))
-
 prev_pre_mat <- matrix(data=0, ncol=length(post$alpha), nrow=length(age))
 prev_post_mat <- matrix(data=0, ncol=length(post2$alpha), nrow=length(age))
 
@@ -192,8 +193,7 @@ barplot(malaysia_all$cases~malaysia_all$AgeMid, ylim=c(0, 1100))
 ## Figure 3A ##
 ###############
 
-pdf("Google Drive/My Drive/Opisthorchis/CCA-evolution/CCA-Cases-TH.pdf",
-    height=6, width=7.6)
+#pdf("CA-Cases-TH.pdf", height=6, width=7.6)
 thai_cases <- kk_cases$CCA_1985_1997+kk_cases$CCA_1998_2009
 par(mfrow=c(1,1), mar=c(6.5,6,2,1))
 barplot(thai_cases~kk_cases$AgeMid, ylim=c(0,2000), col=alpha("red2", alpha=0.5),
@@ -203,7 +203,7 @@ barplot(thai_cases~kk_cases$AgeMid, ylim=c(0,2000), col=alpha("red2", alpha=0.5)
 axis(2, las=2, cex.axis=1.4, lwd=1.2)
 title(ylab="Cases of cholangiocarcinoma", cex.lab=1.65, line=4.5)
 title(xlab="Age group (years)", cex.lab=1.65, line=5.2)
-dev.off()
+#dev.off()
 
 #################################################
 ## Stan model for latent and induction periods ##
@@ -222,7 +222,7 @@ d_cases <- list(
     max_age = max(kk_cases$AgeUpper)
 )
     
-stan_file_time <- file.path("Google Drive/My Drive/Opisthorchis/CCA-evolution","time-to-cca.stan")
+stan_file_time <- file.path("stan", "time-to-cca.stan")
 mod_time <- cmdstan_model(stan_file_time, compile = FALSE)
 mod_time$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 
@@ -239,13 +239,13 @@ fit_time <- mod_time$sample(
 )
 
 fit_time$summary(
-  variables = c("induction_mean", "induction_shape", "latent_mean", "latent_shape")
-  #variables = c("induction_scale", "induction_shape", "latent_scale", "latent_shape")
+  variables = c("induction_mean", "induction_shape", 
+                "latent_mean", "latent_shape")
 )
 
 tpars <- fit_time$draws(
-  variables=c("induction_mean", "induction_shape", "latent_mean", "latent_shape"),
-  #variables = c("induction_scale", "induction_shape", "latent_scale", "latent_shape"),
+  variables=c("induction_mean", "induction_shape", 
+              "latent_mean", "latent_shape"),
                         format="data.frame")
 
 induction_shape <- median(tpars$induction_shape)
@@ -260,12 +260,11 @@ latent_pred <- dgamma(seq(0,55, 0.1), shape=latent_shape, rate=latent_rate)
 induction_CrI90 <- quantile(tpars$induction_mean, probs=c(0.05, 0.5, 0.95))
 latent_CrI90 <- quantile(tpars$latent_mean, probs=c(0.05, 0.5, 0.95))
 
-#############################
-## Plot both distributions ##
-#############################
+#########################################
+## Figure 3B - Plot both distributions ##
+#########################################
 
-#pdf("Google Drive/My Drive/Opisthorchis/CCA-evolution/induction-latent-posterior.pdf",
-#    height=7, width=7)
+#pdf("induction-latent-posterior.pdf", height=7, width=7)
 
 xseq <- seq(0,55,0.1)
 par(mfrow=c(2,1), xpd=F, mar=c(6,6,2,1))
@@ -318,24 +317,6 @@ title(main="Time from driver mutation to cancer", cex.main=1.3)
 
 #dev.off()
 
-#####################
-
-plot(tpars$induction_mean~tpars$latent_mean)
-summary(tpars$induction_shape+tpars$latent_shape)
-
-lpt <- fit_time$draws(variables=c("lp_year"), format="matrix")
-
-pt <- exp(apply(lpt, 2, mean))
-
-cpt <- c()
-for(i in 1:length(pt)){
-  cpt[i] <- (1-prod(1-pt[1:i]))
-}
-plot(cpt/cpt[85], ylim=c(0,1), type="l")
-(1-cpt[85])
-par(mfrow=c(1,1), mar=c(6.5,6,3,1))
-plot((pt/cpt[85])*d_cases$N, type="l")
-
 ##############################
 ## Data list for stan model ##
 ##############################
@@ -382,7 +363,7 @@ cca_stan$Dmat <- dist #add distance matrix for correlations
 ## compile stan model ##
 ########################
 
-stan_file_cca <- file.path("Google Drive/My Drive/Opisthorchis/CCA-evolution","prob-cca-discrete-corr-matrix.stan")
+stan_file_cca <- file.path("stan","prob-cca-discrete-corr-matrix.stan")
 mod_cca <- cmdstan_model(stan_file_cca, compile = FALSE)
 mod_cca$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
 
@@ -397,11 +378,8 @@ fit_cca <- mod_cca$sample(
   iter_sampling = 300
 )
 
-#fit_cca$summary(variables = c("alpha_b", "beta_b", "alpha_f", "beta_f"),
-#                "mean", "median","sd", "rhat", "ess_bulk", "ess_tail")
-
 fit_cca$summary(variables = c("beta_fluke", "etasq", "rhosq"),
-                                "mean", "median","sd", "rhat", "ess_bulk", "ess_tail")
+                "mean", "median","sd", "rhat", "ess_bulk", "ess_tail")
                 
 
 # Posterior extraction
@@ -425,15 +403,14 @@ for(i in 1:length(kk_cases$AgeMid)){
   pred_p_f[i] =  1-prod(1-pf[kk_cases$AgeLower[i]:kk_cases$AgeUpper[i]])
 }
 
-#######################
-## Figures for paper ##
-#######################
+###############
+## Figure 3C ##
+###############
 malaysia_age_offset <- malaysia08$AgeMid-0.5
 thai_age_offset <- kk_cases$AgeMid+0.5
 kk_cases$CCA_1998_2009_100K <- ((kk_cases$CCA_1998_2009/11)/kk_cases$KKP_Pop_2002)*100000
 
-#pdf("Google Drive/My Drive/Opisthorchis/CCA-evolution/CCA-incidence-TH-MAL.pdf",
-#    height=6, width=7.5)
+#pdf("CCA-incidence-TH-MAL.pdf",  height=6, width=7.5)
 par(mfrow=c(1,1), mar=c(6,6,1,1))
 plot((malaysia08$cases/2)/malaysia08$pop*100000~malaysia_age_offset, 
      pch=16, cex=2.2, xlim=c(0,80), ylim=c(0,300), axes=F, col=alpha("navy",0.55),
@@ -477,12 +454,11 @@ for(a in 1:85){
   cpf_int[2,a] <- 1-prod(1-pf_90CrI[2,1:a])
 }
 
-#################################
-## Cumulative probability plot ##
-#################################
+###############
+## Figure 3D ##
+###############
 
-#pdf("Google Drive/My Drive/Opisthorchis/CCA-evolution/cumulative-prob-cca.pdf",
-#    width=7.5, height=6)
+#pdf("cumulative-prob-cca.pdf", width=7.5, height=6)
 par(mfrow=c(1,1), mar=c(5.5, 5.5, 2,2))
 plot(cpf*100~seq(1,85,1), type="l", axes=F, xlab="Age (years)", 
      ylab="", lwd=2, ylim=c(0,1.4),
@@ -491,8 +467,8 @@ lines(cpb*100~seq(1,85,1), type="l", lwd=2)
 axis(1, lwd=1.4, cex.axis=1.3)
 axis(2, lwd=1.4, cex.axis=1.3, las=2)
 title(ylab="Cumulative probability of CCA (%)", cex.lab=1.4, line=4)
-rethinking::shade((cpb_int*100), c(1:85), col=alpha("navy", 0.35))
-rethinking::shade((cpf_int*100), c(1:85), col=alpha("red2", 0.35))
+shade((cpb_int*100), c(1:85), col=alpha("navy", 0.35))
+shade((cpf_int*100), c(1:85), col=alpha("red2", 0.35))
 
 legend(y=c(1.25,1.45), x=c(2,22), cex=1.3, y.intersp=1.4,
        legend=c("", ""), lwd=1,
@@ -504,5 +480,11 @@ legend(y=c(1.25,1.45), x=c(2,22), cex=1.3, y.intersp=1.4,
 
 #dev.off()
 
-## back of envelope calculation
+## Calculation for lifetime probability given infection
 ((cpf[75]-cpb[75])*0.9/0.88 + cpb[75]) *100
+(((cpf_int[1,75]-cpb_int[1,75])*0.9/0.88) + cpb_int[1,75]) *100
+(((cpf_int[2,75]-cpb_int[2,75])*0.9/0.88) + cpb_int[2,75]) *100
+
+((cpf[85]-cpb[85])*0.9/0.88 + cpb[75]) *100
+(((cpf_int[1,85]-cpb_int[1,85])*0.9/0.88) + cpb_int[1,85]) *100
+(((cpf_int[2,85]-cpb_int[2,85])*0.9/0.88) + cpb_int[2,85]) *100
