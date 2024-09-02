@@ -1,4 +1,4 @@
-Code to accompany manuscript "Natural History of a parasite-induced biliary cancer". The scripts run in R version 4.3.3.
+Code to accompany manuscript **"Natural History of a parasite-induced biliary cancer"**. The scripts run in R version 4.3.3.
 
 Analysis of parasitological surveys on the liver fluke _Opisthorchis_ _viverrini_ and the application of epidemiological models is run using `run-dynamic-worm.R`. Note the package dependencies at the beginning of the script. The code and data are provided to generate Figures 2A-D of the mansucript.
 
