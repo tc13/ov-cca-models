@@ -4,4 +4,4 @@ Analysis of parasitological surveys on the liver fluke _Opisthorchis_ _viverrini
 
 Analysis of cholangiocarcinoma case data is run using `run_survival_CCA.R`. The code and data are provided to generate Figures 3A-D of the manuscript.
 
-Analysis of cholangiocarcinoma whole-genome tumour and paired normal data is run using `run-MutationTimeR.R` (Figure 1A) and `run-AmplificationTimeR.R` (Figures 1B-D), however access to the underlying sequence data is controlled by ICGC-DACO.
+Analysis of cholangiocarcinoma whole-genome tumour and paired normal data is run using `run-MutationTimeR.R` (Figure 1A) and `runAmplicationTimeR.R` (Figures 1B-D), however access to the underlying sequence data is controlled by ICGC-DACO.
